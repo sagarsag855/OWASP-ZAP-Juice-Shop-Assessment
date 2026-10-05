@@ -1,0 +1,69 @@
+# OWASP ZAP – Juice Shop Scan Summary
+
+## Target
+
+http://localhost:3000
+
+## Testing Scope
+
+All security testing was performed against the locally hosted OWASP Juice Shop instance at `http://localhost:3000`.
+
+External domains observed during browsing or scanning were excluded from the assessment findings.
+
+## Scan Types Performed
+
+- Client Spider
+- Passive Scanning
+- Active Scanning
+- Manual validation of selected alerts
+
+## Alert Summary
+
+| Finding | Risk | Confidence | Validation Status |
+|---|---|---|---|
+| SQL Injection | High | Low | Confirmed manually |
+| CSP: Failure to Define Directive with No Fallback | Medium | High | Automated finding |
+| Content Security Policy (CSP) Header Not Set | Medium | High | Automated finding |
+| Missing Anti-clickjacking Header | Medium | Medium | Automated finding |
+| Session ID in URL Rewrite | Medium | High | Automated finding |
+| Application Error Disclosure | Low | Medium | Automated finding |
+| Private IP Disclosure | Low | Medium | Automated finding |
+| Strict-Transport-Security Header Not Set | Low | High | Automated finding |
+| Timestamp Disclosure - Unix | Low | Low | Automated finding |
+| X-Content-Type-Options Header Missing | Low | Medium | Automated finding |
+| User Agent Fuzzer | Informational | Medium | Informational |
+| Modern Web Application | Informational | Medium | Informational |
+| Re-examine Cache-control Directives | Informational | Low | Informational |
+| Session Management Response Identified | Informational | High | Informational |
+
+## Out-of-Scope Alert
+
+The Cross-Domain Misconfiguration alert referenced an external Azure Edge URL and was therefore excluded from the assessment because it was outside the defined testing scope.
+
+## SQL Injection Manual Validation
+
+ZAP identified a potential SQL Injection vulnerability at:
+
+`http://localhost:3000/rest/products/search`
+
+Parameter:
+
+`q`
+
+A manually modified request using:
+
+`q=apple%27`
+
+returned:
+
+`HTTP/1.1 500 Internal Server Error`
+
+The response contained:
+
+`SQLITE_ERROR: near "'%'": syntax error`
+
+This provides direct evidence that the supplied input affected an SQLite database query. The finding was therefore classified as manually confirmed SQL Injection.
+
+## Important Limitation
+
+The manual validation confirmed SQL error behavior caused by user-controlled input. It did not demonstrate unauthorized extraction of database records, and no claim of successful data extraction is made.

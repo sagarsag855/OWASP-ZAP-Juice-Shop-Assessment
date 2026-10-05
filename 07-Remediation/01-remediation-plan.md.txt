@@ -1,0 +1,155 @@
+# OWASP Juice Shop – Remediation Plan
+
+## Priority 1 – SQL Injection
+
+**Finding:** SQL Injection  
+**Risk:** High  
+**Affected Endpoint:** `/rest/products/search`  
+**Parameter:** `q`
+
+### Remediation
+
+1. Replace dynamically constructed SQL queries with parameterized queries or prepared statements.
+2. Never concatenate user-controlled input directly into SQL statements.
+3. Apply server-side input validation appropriate to the expected search value.
+4. Use a database account with only the privileges required by the application.
+5. Return generic application errors instead of exposing database errors to clients.
+6. Add automated security tests for SQL injection regression.
+
+---
+
+## Priority 2 – Content Security Policy
+
+**Findings:**
+- Content Security Policy Header Not Set
+- CSP: Failure to Define Directive with No Fallback
+
+### Remediation
+
+1. Configure a Content-Security-Policy response header.
+2. Define explicit policies for required resource types.
+3. Configure `frame-ancestors` to control which sites may embed the application.
+4. Configure `form-action` to restrict where forms may submit data.
+5. Avoid unnecessarily permissive CSP directives.
+6. Test the policy after deployment to ensure legitimate application functionality continues to work.
+
+---
+
+## Priority 3 – Anti-clickjacking Protection
+
+**Finding:** Missing Anti-clickjacking Header
+
+### Remediation
+
+1. Configure an appropriate `X-Frame-Options` header.
+2. Alternatively, use the CSP `frame-ancestors` directive.
+3. Apply the protection consistently to pages that should not be embedded.
+4. Verify the resulting response headers using a security testing tool.
+
+---
+
+## Priority 4 – Session Management
+
+**Finding:** Session ID in URL Rewrite
+
+### Remediation
+
+1. Avoid transmitting session identifiers through URLs where possible.
+2. Use secure cookies for session management.
+3. Configure appropriate cookie security attributes such as `HttpOnly`, `Secure`, and an appropriate `SameSite` policy.
+4. Avoid exposing session identifiers through browser history, logs, bookmarks, or referrer information.
+5. Regenerate session identifiers when appropriate, particularly after authentication or privilege changes.
+
+---
+
+## Priority 5 – Information Disclosure
+
+**Findings:**
+- Application Error Disclosure
+- Private IP Disclosure
+- Timestamp Disclosure - Unix
+
+### Remediation
+
+1. Replace detailed server-side error responses with generic client-facing error messages.
+2. Keep stack traces and implementation details in server-side logs rather than HTTP responses.
+3. Review responses for internal IP addresses and remove them when they are not required.
+4. Review timestamp information and determine whether it is necessary to expose it.
+5. Avoid exposing unnecessary implementation and infrastructure details.
+
+---
+
+# General Security Improvements
+
+## Security Headers
+
+Review the application's security headers and ensure that appropriate protections are consistently applied.
+
+Examples include:
+
+- Content-Security-Policy
+- X-Frame-Options or CSP `frame-ancestors`
+- X-Content-Type-Options
+- Strict-Transport-Security when the application is deployed over HTTPS
+
+## Error Handling
+
+Production applications should:
+
+- Return controlled error responses.
+- Avoid exposing stack traces.
+- Avoid exposing database errors.
+- Log detailed diagnostic information securely on the server.
+
+## Input Validation
+
+All user-controlled input should be:
+
+- Validated on the server.
+- Processed using safe APIs.
+- Properly encoded for its output context.
+- Passed to databases using parameterized queries.
+
+## Session Security
+
+Session identifiers should be protected from unnecessary exposure and should use secure session-management mechanisms.
+
+---
+
+# Verification After Remediation
+
+After implementing fixes:
+
+1. Repeat the ZAP passive scan.
+2. Repeat the active scan against the local test application.
+3. Re-test the SQL Injection endpoint using harmless validation input.
+4. Verify security response headers.
+5. Confirm that detailed server errors are no longer returned.
+6. Compare the new results with the original scan.
+7. Document which findings have been resolved, remain open, or require further review.
+
+---
+
+## Cross-Site Request Forgery (CSRF)
+
+**Priority:** High
+
+### Recommended Fix
+
+Implement CSRF protection for all state-changing requests, including:
+
+- `POST /profile`
+- Other authenticated state-changing endpoints
+
+Use a server-generated, unpredictable CSRF token and require the token to be submitted with the request.
+
+### Additional Controls
+
+- Validate the `Origin` and/or `Referer` headers as a secondary defense.
+- Configure authentication cookies with appropriate `SameSite`, `Secure`, and `HttpOnly` attributes.
+- Do not rely on Origin/Referer validation as the only CSRF defense.
+- Apply CSRF protection consistently to all state-changing operations.
+
+### Verification
+
+After remediation, repeat the controlled cross-origin test. The request from `http://localhost:8000` should no longer be able to change the authenticated user's profile without a valid CSRF token.
